@@ -1,0 +1,107 @@
+version: '3'
+services:
+
+  #PHP Service
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.php
+    image: customphp/latest
+    container_name: laravel
+    restart: unless-stopped
+    tty: true
+    environment:
+      SERVICE_NAME: app
+      SERVICE_TAGS: dev
+    working_dir: /var/www/laravel
+    env_file:
+      - ./laravel/.env
+    volumes:
+      - ./laravel:/var/www/laravel
+      - ./php/local.ini:/usr/local/etc/php/conf.d/local.ini
+    networks:
+      - app-network
+
+  #Nginx Service
+  webserver:
+    image: nginx:alpine
+    container_name: webserver
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "8000:80"
+      - "443:443"
+    volumes:
+      - ./laravel:/var/www/laravel
+      - ./nginx/conf.d/:/etc/nginx/conf.d/
+    networks:
+      - app-network
+
+  node:
+    build:
+      context: .
+      dockerfile: Dockerfile.node
+    volumes:
+      - ./node:/var/www/node
+    command: npm start
+    # env_file:
+    #   - ./node/.env
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: development
+      DEBUG: nodejs-docker-express:*
+    networks:
+      - app-network
+
+  # db:
+  #   image: postgres:12.3-alpine
+  #   container_name: postgres
+  #   restart: unless-stopped
+  #   ports:
+  #     - "5432:5432"
+  #   volumes:
+  #     - ./dbdata:/var/lib/postgresql/data
+  #   environment:
+  #     POSTGRES_USER: mastercrm
+  #     POSTGRES_PASSWORD: mastercrm
+  #     POSTGRES_DB: mastercrm
+  #     POSTGRES_HOST_AUTH_METHOD: "trust"
+  #   networks:
+  #     - app-network
+
+  db:
+    image: mysql:5.7
+    restart: always
+    container_name: mysql
+    environment:
+      MYSQL_DATABASE: 'mastercrm'
+      MYSQL_USER: 'mastercrm'
+      MYSQL_PASSWORD: 'mastercrm'
+      MYSQL_ROOT_PASSWORD: 'mastercrm'
+    ports:
+      - '3306:3306'
+    volumes:
+      - .dbdata:/var/lib/mysql
+    networks:
+      - app-network
+
+  phpmyadmin:
+    image: 'phpmyadmin/phpmyadmin'
+    ports:
+      - 8080:80
+    environment:
+      MYSQL_USERNAME: "mastercrm"
+      MYSQL_ROOT_PASSWORD: "mastercrm"
+      PMA_HOST: mysql
+    networks:
+      - app-network
+
+#Docker Networks
+networks:
+  app-network:
+    driver: bridge
+#Volumes
+volumes:
+  dbdata:
+    driver: local
