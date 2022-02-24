@@ -7,7 +7,7 @@ services:
       context: .
       dockerfile: Dockerfile.php
     image: customphp/latest
-    container_name: laravel
+    container_name: master_crm_laravel
     restart: unless-stopped
     tty: true
     environment:
@@ -25,7 +25,7 @@ services:
   #Nginx Service
   webserver:
     image: nginx:alpine
-    container_name: webserver
+    container_name: master_crm_server
     restart: unless-stopped
     tty: true
     ports:
@@ -41,6 +41,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.node
+    container_name: master_crm_node
     volumes:
       - ./node:/var/www/node
     command: npm start
@@ -73,14 +74,14 @@ services:
   db:
     image: mysql:5.7
     restart: always
-    container_name: mysql
+    container_name: master_crm_sql
     environment:
       MYSQL_DATABASE: 'mastercrm'
       MYSQL_USER: 'mastercrm'
       MYSQL_PASSWORD: 'mastercrm'
       MYSQL_ROOT_PASSWORD: 'mastercrm'
     ports:
-      - '3306:3306'
+      - '3307:3306'
     volumes:
       - .dbdata:/var/lib/mysql
     networks:
@@ -97,6 +98,22 @@ services:
     networks:
       - app-network
 
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:6.5.0
+    environment:
+      - discovery.type=single-node
+      - network.host=0.0.0.0
+      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+    ports:
+      - 9200:9200
+      - 9300:9300
+
+    volumes:
+      - .docker:/usr/share/elasticsearch/data
+    networks:
+      - app-network
+
+
 #Docker Networks
 networks:
   app-network:
@@ -105,3 +122,6 @@ networks:
 volumes:
   dbdata:
     driver: local
+  docker:
+    driver: local
+

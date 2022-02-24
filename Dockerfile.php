@@ -1,4 +1,4 @@
-FROM php:7.4.1-fpm
+FROM php:8.0-fpm
 
 # Copy composer.lock and composer.json
 COPY  ./laravel/composer.json /var/www/laravel/
@@ -19,7 +19,8 @@ RUN apt-get update && apt-get install -y \
     unzip \
     git \
     curl \
-    libpq-dev 
+    libpq-dev \
+    libc-client-dev libkrb5-dev
 RUN apt-get install libzip-dev -y
 
 RUN curl -sL https://deb.nodesource.com/setup_14.x| bash -
@@ -33,6 +34,8 @@ RUN docker-php-ext-install pdo_mysql pgsql pdo_pgsql zip exif pcntl
 RUN docker-php-ext-configure gd --with-freetype=/usr/include/ 
 RUN docker-php-ext-configure pgsql -with-pgsql=/usr/local/pgsql
 RUN docker-php-ext-install gd
+RUN docker-php-ext-configure imap --with-kerberos --with-imap-ssl \
+    && docker-php-ext-install imap
 
 # Install composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
