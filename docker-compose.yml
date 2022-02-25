@@ -95,6 +95,7 @@ services:
       MYSQL_USERNAME: "mastercrm"
       MYSQL_ROOT_PASSWORD: "mastercrm"
       PMA_HOST: db
+      UPLOAD_LIMIT: 64M
     depends_on:
       - db
 
