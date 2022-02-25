@@ -94,7 +94,10 @@ services:
     environment:
       MYSQL_USERNAME: "mastercrm"
       MYSQL_ROOT_PASSWORD: "mastercrm"
-      PMA_HOST: mysql
+      PMA_HOST: db
+    depends_on:
+      - db
+
     networks:
       - app-network
 
